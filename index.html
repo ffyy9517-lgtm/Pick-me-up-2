@@ -17,7 +17,6 @@
             font-family: sans-serif;
         }
 
-        /* الحاوية الرئيسية الطولية اللتي تمتد بمقاس الشاشة بالكامل */
         .game-container {
             display: flex;
             flex-direction: column;
@@ -26,20 +25,45 @@
             box-sizing: border-box;
         }
 
-        /* 1. الغرفة العلوية (Header): تأخذ مساحة صغيرة ثابتة في الأعلى */
+        /* 1. تحديث الغرفة العلوية وتصميم شريط الموارد */
         .game-header {
-            height: 70px;
-            border: 2px dashed #4fc3f7; /* حد أزرق مؤقت لرؤية التقسيم */
+            height: 65px;
+            background-color: #060912; /* خلفية داكنة مميزة */
+            border-bottom: 2px solid rgba(79, 195, 247, 0.2); /* خط سفلي مضيء خفيف */
             display: flex;
             align-items: center;
-            justify-content: center;
-            background-color: rgba(79, 195, 247, 0.05);
+            justify-content: space-around; /* توزيع متوازن للموارد */
+            padding: 0 15px;
+            box-sizing: border-box;
         }
 
-        /* 2. الغرفة الوسطى (Main Area): تأخذ كل المساحة المتبقية تلقائياً */
+        /* تصميم خانة المورد (الذهب أو الجواهر) */
+        .resource-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05); /* خلفية شبه شفافة */
+            padding: 6px 14px;
+            border-radius: 20px; /* زوايا دائرية ناعمة */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 90px;
+            justify-content: center;
+        }
+
+        .resource-icon {
+            font-size: 1.2rem;
+            margin-left: 8px; /* مسافة بين الأيقونة والرقم */
+        }
+
+        .resource-value {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #e8eaf6;
+        }
+
+        /* 2. الغرفة الوسطى (مؤقتة بالحدود البنفسجية) */
         .game-main {
             flex-grow: 1;
-            border: 2px dashed #ce93d8; /* حد بنفسجي مؤقت لرؤية مسرح اللعب */
+            border: 2px dashed #ce93d8; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -47,10 +71,10 @@
             margin: 5px 0;
         }
 
-        /* 3. الغرفة السفلية (Footer): تأخذ مساحة ثابتة ومريحة للأزرار أسفل الشاشة */
+        /* 3. الغرفة السفلية (مؤقتة بالحدود الخضراء) */
         .game-footer {
             height: 80px;
-            border: 2px dashed #4caf50; /* حد أخضر مؤقت لرؤية منطقة الأزرار */
+            border: 2px dashed #4caf50; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -63,7 +87,15 @@
     <div class="game-container">
         
         <div class="game-header">
-            <h3>👑 الغرفة العلوية (المستوى والعملات)</h3>
+            <div class="resource-box">
+                <span class="resource-icon">🪙</span>
+                <span class="resource-value" id="gold-count">1,500</span>
+            </div>
+
+            <div class="resource-box">
+                <span class="resource-icon">💎</span>
+                <span class="resource-value" id="gem-count">50</span>
+            </div>
         </div>
 
         <div class="game-main">
