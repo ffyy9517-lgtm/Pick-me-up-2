@@ -7,101 +7,84 @@
     
     <style>
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; 
-            background-color: #0b1020; 
-            color: #ffffff;
-            font-family: sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #0b1020; color: #ffffff;
+            font-family: sans-serif; -webkit-user-select: none; user-select: none;
         }
 
         .game-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
+            display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box;
         }
 
         /* 1. شريط الموارد العلوي */
         .game-header {
-            height: 65px;
-            background-color: #060912;
+            height: 65px; background-color: #060912;
             border-bottom: 2px solid rgba(79, 195, 247, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 0 15px;
-            box-sizing: border-box;
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 0 15px; box-sizing: border-box;
         }
 
         .resource-box {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            min-width: 90px;
-            justify-content: center;
+            display: flex; align-items: center; background: rgba(255, 255, 255, 0.05);
+            padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 90px; justify-content: center;
         }
 
         .resource-icon { font-size: 1.2rem; margin-left: 8px; }
         .resource-value { font-weight: bold; font-size: 1rem; color: #e8eaf6; }
 
-        /* 2. الغرفة الوسطى (مؤقتة) */
+        /* 2. الغرفة الوسطى المحسنة (مسرح اللعب) */
         .game-main {
-            flex-grow: 1;
-            border: 2px dashed #ce93d8; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(206, 147, 216, 0.05);
-            margin: 5px 0;
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box; position: relative;
         }
 
-        /* 3. تحديث الغرفة السفلية وتصميم أزرار التحكم */
+        /* تصميم بطاقة البطل التفاعلية */
+        .hero-card {
+            width: 100%; max-width: 280px; height: 380px;
+            background: linear-gradient(145deg, #111827, #1f2937);
+            border: 2px solid #ce93d8; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(206, 147, 216, 0.2);
+            padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: space-between;
+            text-align: center; cursor: pointer; transition: transform 0.2s;
+            position: relative; overflow: hidden;
+        }
+
+        .hero-card:active { transform: scale(0.98); }
+
+        .hero-title { margin: 0; font-size: 1.4rem; color: #4fc3f7; }
+        
+        /* نظام السبع نجوم */
+        .hero-stars { color: #ffd700; font-size: 1.1rem; margin: 5px 0; letter-spacing: 2px; }
+
+        /* حاوية العرض والتبديل (الواجهة الافتراضية ضد الإحصائيات والوصف) */
+        .card-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        .hero-avatar { font-size: 4.5rem; margin: 15px 0; }
+        
+        /* قسم الإحصائيات المخفي ويظهر عند اللمس */
+        .hero-details { display: none; text-align: right; width: 100%; font-size: 0.95rem; line-height: 1.4; }
+        .stat-item { margin: 6px 0; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+        .hero-desc { font-style: italic; color: #b0bec5; text-align: center; margin-top: 10px; font-size: 0.85rem; }
+
+        .click-hint { font-size: 0.75rem; color: #a78bfa; margin-top: auto; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* 3. الغرفة السفلية (الأزرار) */
         .game-footer {
-            height: 85px;
-            background-color: #060912; /* خلفية داكنة متناسقة */
+            height: 85px; background-color: #060912;
             border-top: 2px solid rgba(79, 195, 247, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-gap;
-            padding: 0 15px;
-            box-sizing: border-box;
-            gap: 15px; /* مسافة بين الزرين */
+            display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; gap: 15px;
         }
 
-        /* التصميم المشترك للأزرار */
         .btn-control {
-            flex: 1; /* جعل الزرين متساويين في العرض تماماً */
-            height: 50px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #ffffff;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            flex: 1; height: 50px; border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: bold; color: #ffffff;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-
-        /* زر المعركة (اللون الهجومي) */
-        .btn-battle {
-            background: linear-gradient(135deg, #ff7043, #ef5350);
-        }
-
-        /* زر الاستدعاء (اللون السحري) */
-        .btn-summon {
-            background: linear-gradient(135deg, #ce93d8, #4fc3f7);
-            color: #060912; /* خط داكن لتباين أفضل */
-        }
+        .btn-battle { background: linear-gradient(135deg, #ff7043, #ef5350); }
+        .btn-summon { background: linear-gradient(135deg, #ce93d8, #4fc3f7); color: #060912; }
     </style>
 </head>
 <body>
@@ -109,30 +92,54 @@
     <div class="game-container">
         
         <div class="game-header">
-            <div class="resource-box">
-                <span class="resource-icon">🪙</span>
-                <span class="resource-value" id="gold-count">1,500</span>
-            </div>
-            <div class="resource-box">
-                <span class="resource-icon">💎</span>
-                <span class="resource-value" id="gem-count">50</span>
-            </div>
+            <div class="resource-box"><span class="resource-icon">🪙</span><span class="resource-value">1,500</span></div>
+            <div class="resource-box"><span class="resource-icon">💎</span><span class="resource-value">50</span></div>
         </div>
 
         <div class="game-main">
-            <p>⚔️ الغرفة الوسطى (المعارك وبطاقات الأبطال) ⚔️</p>
+            <div class="hero-card" id="heroCard" onclick="toggleCardDetails()">
+                <h3 class="hero-title" id="heroName">فارس التنين</h3>
+                <div class="hero-stars" id="heroStars">⭐⭐⭐⭐⭐⭐⭐</div>
+                
+                <div class="card-body">
+                    <div id="cardFront" class="hero-avatar">🐲</div>
+                    
+                    <div id="cardBack" class="hero-details">
+                        <div class="stat-item"><span>⚔️ الهجوم:</span> <span style="color:#ff7043">850</span></div>
+                        <div class="stat-item"><span>🛡️ الدفاع:</span> <span style="color:#4fc3f7">620</span></div>
+                        <div class="stat-item"><span>❤️ الصحة:</span> <span style="color:#66bb6a">2400</span></div>
+                        <p class="hero-desc">"حارس النيران الأسطوري، يمتلك سيفاً مصهوراً بقوة التنانين القديمة لحماية الممالك السبع."</p>
+                    </div>
+                </div>
+                
+                <span class="click-hint" id="clickHint">اضغط لرؤية الإحصائيات والوصف</span>
+            </div>
         </div>
 
         <div class="game-footer">
-            <button class="btn-control btn-battle">
-                <span>⚔️</span> معركة
-            </button>
-            <button class="btn-control btn-summon">
-                <span>🔮</span> استدعاء
-            </button>
+            <button class="btn-control btn-battle"><span>⚔️</span> معركة</button>
+            <button class="btn-control btn-summon"><span>🔮</span> استدعاء</button>
         </div>
 
     </div>
 
+    <script>
+        // دالة تبديل العرض داخل البطاقة عند الضغط بالأصبع
+        function toggleCardDetails() {
+            const front = document.getElementById('cardFront');
+            const back = document.getElementById('cardBack');
+            const hint = document.getElementById('clickHint');
+            
+            if (back.style.display === 'none' || back.style.display === '') {
+                front.style.display = 'none';
+                back.style.display = 'block';
+                hint.innerText = "اضغط للعودة لصورة البطل";
+            } else {
+                front.style.display = 'block';
+                back.style.display = 'none';
+                hint.innerText = "اضغط لرؤية الإحصائيات والوصف";
+            }
+        }
+    </script>
 </body>
 </html>
