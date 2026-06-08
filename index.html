@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لعبة Pick Me Up</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -33,13 +35,15 @@
         .resource-icon { font-size: 1.2rem; margin-left: 8px; }
         .resource-value { font-weight: bold; font-size: 1rem; color: #e8eaf6; }
 
-        /* 2. الغرفة الوسطى المحسنة (مسرح اللعب) */
+        /* status cloud bar */
+        .sync-status { font-size: 0.75rem; color: #4caf50; text-align: center; background: #060912; padding: 2px 0; }
+
+        /* 2. مسرح اللعب */
         .game-main {
             flex-grow: 1; display: flex; align-items: center; justify-content: center;
             padding: 20px; box-sizing: border-box; position: relative;
         }
 
-        /* تصميم بطاقة البطل التفاعلية */
         .hero-card {
             width: 100%; max-width: 280px; height: 380px;
             background: linear-gradient(145deg, #111827, #1f2937);
@@ -47,40 +51,52 @@
             box-shadow: 0 10px 25px rgba(206, 147, 216, 0.2);
             padding: 20px; box-sizing: border-box;
             display: flex; flex-direction: column; justify-content: space-between;
-            text-align: center; cursor: pointer; transition: transform 0.2s;
+            text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.5s;
             position: relative; overflow: hidden;
         }
 
-        .hero-card:active { transform: scale(0.98); }
+        @keyframes summon-flash {
+            0% { transform: scale(1); box-shadow: 0 0 0px rgba(206, 147, 216, 0); }
+            50% { transform: scale(1.05) rotate(3deg); box-shadow: 0 0 40px #ce93d8; filter: brightness(1.5); }
+            100% { transform: scale(1) rotate(0deg); box-shadow: 0 10px 25px rgba(206, 147, 216, 0.2); }
+        }
+        .summoning { animation: summon-flash 0.6s ease-in-out; }
 
         .hero-title { margin: 0; font-size: 1.4rem; color: #4fc3f7; }
-        
-        /* نظام السبع نجوم */
         .hero-stars { color: #ffd700; font-size: 1.1rem; margin: 5px 0; letter-spacing: 2px; }
 
-        /* حاوية العرض والتبديل (الواجهة الافتراضية ضد الإحصائيات والوصف) */
         .card-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        
         .hero-avatar { font-size: 4.5rem; margin: 15px 0; }
         
-        /* قسم الإحصائيات المخفي ويظهر عند اللمس */
         .hero-details { display: none; text-align: right; width: 100%; font-size: 0.95rem; line-height: 1.4; }
         .stat-item { margin: 6px 0; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
         .hero-desc { font-style: italic; color: #b0bec5; text-align: center; margin-top: 10px; font-size: 0.85rem; }
 
-        .click-hint { font-size: 0.75rem; color: #a78bfa; margin-top: auto; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .click-hint { font-size: 0.75rem; color: #a78bfa; margin-top: auto; }
 
-        /* 3. الغرفة السفلية (الأزرار) */
+        /* نافذة خيارات الاستدعاء */
+        .summon-overlay {
+            display: none; position: absolute; bottom: 95px; left: 15px; right: 15px;
+            background: #060912; border: 2px solid #4fc3f7; border-radius: 15px;
+            padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.8); z-index: 10;
+        }
+        .summon-option {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); margin: 8px 0; padding: 10px;
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .btn-action { padding: 8px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-gold-sub { background: #ffaa00; color: #000; }
+        .btn-gem-sub { background: #00b0ff; }
+
+        /* 3. الغرفة السفلية */
         .game-footer {
-            height: 85px; background-color: #060912;
-            border-top: 2px solid rgba(79, 195, 247, 0.1);
+            height: 85px; background-color: #060912; border-top: 2px solid rgba(79, 195, 247, 0.1);
             display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; gap: 15px;
         }
 
         .btn-control {
-            flex: 1; height: 50px; border: none; border-radius: 12px;
-            font-size: 1.1rem; font-weight: bold; color: #ffffff;
+            flex: 1; height: 50px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: #ffffff;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-battle { background: linear-gradient(135deg, #ff7043, #ef5350); }
@@ -92,54 +108,192 @@
     <div class="game-container">
         
         <div class="game-header">
-            <div class="resource-box"><span class="resource-icon">🪙</span><span class="resource-value">1,500</span></div>
-            <div class="resource-box"><span class="resource-icon">💎</span><span class="resource-value">50</span></div>
+            <div class="resource-box"><span class="resource-icon">🪙</span><span class="resource-value" id="gold-count">...</span></div>
+            <div class="resource-box"><span class="resource-icon">💎</span><span class="resource-value" id="gem-count">...</span></div>
         </div>
+        <div class="sync-status" id="syncStatus">🔄 جاري الاتصال بالسحابة...</div>
 
         <div class="game-main">
+            <div class="summon-overlay" id="summonMenu">
+                <div style="text-align:center; font-weight:bold; margin-bottom:10px; font-size:0.9rem; color:#4fc3f7;">اختر نوع الاستدعاء:</div>
+                <div class="summon-option">
+                    <div><strong>استدعاء عادي (1-3 ⭐)</strong><br><small style="color:#aaa;">التكلفة: 100 🪙</small></div>
+                    <button class="btn-action btn-gold-sub" onclick="triggerSummon('gold')">سحب 🪙</button>
+                </div>
+                <div class="summon-option">
+                    <div><strong>استدعاء نادر (2-4 ⭐)</strong><br><small style="color:#aaa;">التكلفة: 10 💎</small></div>
+                    <button class="btn-action btn-gem-sub" onclick="triggerSummon('gem')">سحب 💎</button>
+                </div>
+            </div>
+
             <div class="hero-card" id="heroCard" onclick="toggleCardDetails()">
-                <h3 class="hero-title" id="heroName">فارس التنين</h3>
-                <div class="hero-stars" id="heroStars">⭐⭐⭐⭐⭐⭐⭐</div>
+                <h3 class="hero-title" id="heroName">البطل السحابي</h3>
+                <div class="hero-stars" id="heroStars">⭐</div>
                 
                 <div class="card-body">
-                    <div id="cardFront" class="hero-avatar">🐲</div>
+                    <div id="cardFront" class="hero-avatar">🧙‍♂️</div>
                     
                     <div id="cardBack" class="hero-details">
-                        <div class="stat-item"><span>⚔️ الهجوم:</span> <span style="color:#ff7043">850</span></div>
-                        <div class="stat-item"><span>🛡️ الدفاع:</span> <span style="color:#4fc3f7">620</span></div>
-                        <div class="stat-item"><span>❤️ الصحة:</span> <span style="color:#66bb6a">2400</span></div>
-                        <p class="hero-desc">"حارس النيران الأسطوري، يمتلك سيفاً مصهوراً بقوة التنانين القديمة لحماية الممالك السبع."</p>
+                        <div class="stat-item"><span>⚔️ الهجوم:</span> <span id="statAtk" style="color:#ff7043">100</span></div>
+                        <div class="stat-item"><span>🛡️ الدفاع:</span> <span id="statDef" style="color:#4fc3f7">50</span></div>
+                        <div class="stat-item"><span>❤️ الصحة:</span> <span id="statHp" style="color:#66bb6a">500</span></div>
+                        <p class="hero-desc" id="heroDesc">"قراءة البيانات من قاعدة البيانات السحابية..."</p>
                     </div>
                 </div>
-                
                 <span class="click-hint" id="clickHint">اضغط لرؤية الإحصائيات والوصف</span>
             </div>
         </div>
 
         <div class="game-footer">
             <button class="btn-control btn-battle"><span>⚔️</span> معركة</button>
-            <button class="btn-control btn-summon"><span>🔮</span> استدعاء</button>
+            <button class="btn-control btn-summon" onclick="toggleSummonMenu()"><span>🔮</span> استدعاء</button>
         </div>
 
     </div>
 
     <script>
-        // دالة تبديل العرض داخل البطاقة عند الضغط بالأصبع
+        // دمج بيانات مشروعك السحابي الخاصة بك
+        const SUPABASE_URL = "https://ctzyypwnfyhtualqjmda.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_3jA6o74JW3kR-3l_jAHgmQ_xybUle2a";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // توليد معرف مستخدم وهمي مؤقت وثابت في المتصفح لمحاكاة حساب التليغرام
+        let userId = localStorage.getItem('game_user_uuid');
+        if (!userId) {
+            userId = 'all-user-id-0000-0000-000000000001'; // معرف ثابت موحد للتجربة الافتراضية
+            localStorage.setItem('game_user_uuid', userId);
+        }
+
+        const heroesPool = [
+            { name: "مقاتل السلايم", avatar: "🟢", desc: "كائن هلامي لطيف لكن ضرباته سريعة ومفاجئة.", baseAtk: 120, baseDef: 80, baseHp: 600 },
+            { name: "الوحش الصخري", avatar: "🪨", desc: "كتلة صخرية صلبة تتحمل أقوى الضربات والهجمات.", baseAtk: 90, baseDef: 180, baseHp: 900 },
+            { name: "الرامي البارع", avatar: "🏹", desc: "يصيب أهدافه بدقة متناهية من مسافات بعيدة جداً.", baseAtk: 210, baseDef: 60, baseHp: 550 },
+            { name: "فارس الظلام", avatar: "⚔️", desc: "محارب غامض مدرع بقوة الفولاذ والظلال الحارقة.", baseAtk: 320, baseDef: 240, baseHp: 1500 },
+            { name: "التنين الملتهب", avatar: "🐉", desc: "المخلوق الأسطوري المدمر، يحرق الأعداء بلفحة لهب واحدة.", baseAtk: 550, baseDef: 400, baseHp: 2800 }
+        ];
+
+        let gold = 1000;
+        let gems = 100;
+        let isShowingDetails = false;
+
+        // تحميل البيانات من السحابة عند تشغيل اللعبة
+        async function loadUserData() {
+            try {
+                let { data, error } = await supabase.from('profiles').select('gold, gems').eq('id', userId).maybeSingle();
+                
+                if (error) throw error;
+
+                if (!data) {
+                    // إذا كان اللاعب جديداً تماماً، ننشئ له الحساب بالمكافآت (1000 ذهب و 100 جواهر)
+                    const { error: insertError } = await supabase.from('profiles').insert([{ id: userId, gold: 1000, gems: 100 }]);
+                    if (insertError) throw insertError;
+                    gold = 1000; gems = 100;
+                } else {
+                    gold = data.gold; gems = data.gems;
+                }
+
+                document.getElementById('gold-count').innerText = gold;
+                document.getElementById('gem-count').innerText = gems;
+                document.getElementById('syncStatus').innerText = "⚡ متصل بالسحابة (تم مزامنة البيانات)";
+            } catch (err) {
+                console.error(err);
+                document.getElementById('syncStatus').innerText = "⚠️ فشل المزامنة (تأكد من إعدادات جدول Supabase)";
+                // تشغيل محلي في حال وجود خطأ في الرابط
+                gold = 1000; gems = 100;
+                document.getElementById('gold-count').innerText = gold;
+                document.getElementById('gem-count').innerText = gems;
+            }
+        }
+
         function toggleCardDetails() {
             const front = document.getElementById('cardFront');
             const back = document.getElementById('cardBack');
             const hint = document.getElementById('clickHint');
-            
-            if (back.style.display === 'none' || back.style.display === '') {
-                front.style.display = 'none';
-                back.style.display = 'block';
+            if(document.getElementById('heroCard').classList.contains('summoning')) return;
+
+            isShowingDetails = !isShowingDetails;
+            if (isShowingDetails) {
+                front.style.display = 'none'; back.style.display = 'block';
                 hint.innerText = "اضغط للعودة لصورة البطل";
             } else {
-                front.style.display = 'block';
-                back.style.display = 'none';
+                front.style.display = 'block'; back.style.display = 'none';
                 hint.innerText = "اضغط لرؤية الإحصائيات والوصف";
             }
         }
+
+        function toggleSummonMenu() {
+            const menu = document.getElementById('summonMenu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function calculateStars(type) {
+            const rand = Math.random() * 100;
+            if (type === 'gold') {
+                if (rand < 89) return 1;
+                else if (rand < 99) return 2;
+                else return 3;
+            } else {
+                if (rand < 89) return 2;
+                else if (rand < 99) return 3;
+                else return 4;
+            }
+        }
+
+        async function triggerSummon(currency) {
+            if (currency === 'gold' && gold < 100) { alert("ليس لديك عملات ذهبية كافية! 🪙"); return; }
+            if (currency === 'gem' && gems < 10) { alert("ليس لديك جواهر كافية! 💎"); return; }
+
+            if (currency === 'gold') gold -= 100;
+            else gems -= 10;
+
+            document.getElementById('gold-count').innerText = gold;
+            document.getElementById('gem-count').innerText = gems;
+            document.getElementById('summonMenu').style.display = 'none';
+            
+            const card = document.getElementById('heroCard');
+            card.classList.add('summoning');
+
+            const starsCount = calculateStars(currency);
+            const randomHero = heroesPool[Math.floor(Math.random() * heroesPool.length)];
+            const multiplier = starsCount;
+
+            const finalHero = {
+                name: randomHero.name,
+                stars: starsCount,
+                avatar: randomHero.avatar,
+                atk: randomHero.baseAtk * multiplier,
+                def: randomHero.baseDef * multiplier,
+                hp: randomHero.baseHp * multiplier,
+                desc: randomHero.desc
+            };
+
+            // حفظ التحديث الجديد في السحابة فوراً
+            try {
+                await supabase.from('profiles').update({ gold: gold, gems: gems }).eq('id', userId);
+                await supabase.from('user_heroes').insert([{
+                    user_id: userId, hero_name: finalHero.name, stars: finalHero.stars,
+                    avatar: finalHero.avatar, attack: finalHero.atk, defense: finalHero.def,
+                    hp: finalHero.hp, description: finalHero.desc
+                }]);
+            } catch (e) { console.error("خطأ بحفظ السحابة:", e); }
+
+            setTimeout(() => {
+                document.getElementById('heroName').innerText = finalHero.name;
+                document.getElementById('heroStars').innerText = "⭐".repeat(finalHero.stars);
+                document.getElementById('cardFront').innerText = finalHero.avatar;
+                
+                document.getElementById('statAtk').innerText = finalHero.atk;
+                document.getElementById('statDef').innerText = finalHero.def;
+                document.getElementById('statHp').innerText = finalHero.hp;
+                document.getElementById('heroDesc').innerText = finalHero.desc;
+
+                isShowingDetails = true; toggleCardDetails();
+                card.classList.remove('summoning');
+            }, 600);
+        }
+
+        // بدء التشغيل
+        window.onload = loadUserData;
     </script>
 </body>
 </html>
