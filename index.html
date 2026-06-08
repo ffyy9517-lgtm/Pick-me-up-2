@@ -6,38 +6,74 @@
     <title>لعبة Pick Me Up</title>
     
     <style>
-        /* إعدادات المتصفح لجعل الصفحة تتصرف كتطبيق هاتف معزول */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            /* لمنع التمرير الخارجي أو ظهور مساحات بيضاء عند السحب */
             overflow: hidden; 
-            /* لون خلفية غامق ومميز للألعاب */
             background-color: #0b1020; 
             color: #ffffff;
             font-family: sans-serif;
         }
 
-        .screen-test {
+        /* الحاوية الرئيسية الطولية اللتي تمتد بمقاس الشاشة بالكامل */
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 1. الغرفة العلوية (Header): تأخذ مساحة صغيرة ثابتة في الأعلى */
+        .game-header {
+            height: 70px;
+            border: 2px dashed #4fc3f7; /* حد أزرق مؤقت لرؤية التقسيم */
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
+            background-color: rgba(79, 195, 247, 0.05);
+        }
+
+        /* 2. الغرفة الوسطى (Main Area): تأخذ كل المساحة المتبقية تلقائياً */
+        .game-main {
+            flex-grow: 1;
+            border: 2px dashed #ce93d8; /* حد بنفسجي مؤقت لرؤية مسرح اللعب */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(206, 147, 216, 0.05);
+            margin: 5px 0;
+        }
+
+        /* 3. الغرفة السفلية (Footer): تأخذ مساحة ثابتة ومريحة للأزرار أسفل الشاشة */
+        .game-footer {
+            height: 80px;
+            border: 2px dashed #4caf50; /* حد أخضر مؤقت لرؤية منطقة الأزرار */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(76, 175, 80, 0.05);
         }
     </style>
 </head>
 <body>
 
-    <div class="screen-test">
-        <div>
-            <h2>📱 تم تهيئة شاشة الموبايل بنجاح!</h2>
-            <p>الخلفية أصبحت غامقة، ومقاس الشاشة محكوم 100% بدون إمكانية التكبير العشوائي.</p>
+    <div class="game-container">
+        
+        <div class="game-header">
+            <h3>👑 الغرفة العلوية (المستوى والعملات)</h3>
         </div>
+
+        <div class="game-main">
+            <p>⚔️ الغرفة الوسطى (المعارك وبطاقات الأبطال) ⚔️</p>
+        </div>
+
+        <div class="game-footer">
+            <h3>🎮 الغرفة السفلية (أزرار التحكم)</h3>
+        </div>
+
     </div>
 
 </body>
